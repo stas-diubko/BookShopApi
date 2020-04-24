@@ -4,20 +4,16 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace BookShopApi.Models
 {
     [BsonIgnoreExtraElements]
-    public class Book
+    public class Roles
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string _id { get; set; }
 
-        public string author { get; set; }
+        public BsonArray users { get; set; }
 
-        public string title { get; set; }
+        public BsonArray admins { get; set; }
 
-        public string descript { get; set; }
-
-        public string price { get; set; }
-
-        public string bookImage { get; set; }
+        //public int __v { get; }
     }
 }

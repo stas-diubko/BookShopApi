@@ -2,6 +2,7 @@
 using BookShopApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BookShopApi.Controllers
 {
@@ -16,10 +17,12 @@ namespace BookShopApi.Controllers
             _userService = userService;
         }
 
+        [Authorize]
         [HttpGet]
         public ActionResult<List<User>> Get() =>
             _userService.Get();
 
+        [Authorize]
         [HttpGet("{id:length(24)}", Name = "GetUser")]
         public ActionResult<User> Get(string id)
         {
@@ -33,6 +36,7 @@ namespace BookShopApi.Controllers
             return user;
         }
 
+        [Authorize]
         [HttpDelete("{id:length(24)}")]
         public IActionResult Delete(string id)
         {
@@ -48,7 +52,7 @@ namespace BookShopApi.Controllers
             return NoContent();
         }
 
-        [HttpPost]
+        [HttpPost("{register}")]
         public ActionResult<User> Create(User user)
         {
             _userService.Create(user);
@@ -56,6 +60,7 @@ namespace BookShopApi.Controllers
             return CreatedAtRoute("GetUser", new { id = user._id.ToString() }, user);
         }
 
+        [Authorize]
         [HttpPut("{id:length(24)}")]
         public IActionResult Update(string id, User updatingUser)
         {
@@ -68,6 +73,14 @@ namespace BookShopApi.Controllers
             _userService.Update(id, updatingUser);
 
             return NoContent();
+        }
+
+        [Authorize]
+        [HttpGet("{avatar}/{id:length(24)}")]
+        public ActionResult<string> GetUserAvatar(string id)
+        {
+            string avatar = _userService.GetUserAvatar(id);
+            return avatar;
         }
     }
 }

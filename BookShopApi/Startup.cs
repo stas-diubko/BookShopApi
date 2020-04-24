@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BookShopApi
 {
@@ -23,7 +25,28 @@ namespace BookShopApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            // requires using Microsoft.Extensions.Options
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.RequireHttpsMetadata = false;
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            
+                            ValidIssuer = AuthOptions.ISSUER,
+
+                            ValidateAudience = true,
+                            
+                            ValidAudience = AuthOptions.AUDIENCE,
+                            
+                            ValidateLifetime = true,
+
+                            IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
+                            ValidateIssuerSigningKey = true,
+                        };
+                    });
+
             services.Configure<BookstoreDatabaseSettings>(
                 Configuration.GetSection(nameof(BookstoreDatabaseSettings)));
 
@@ -44,13 +67,15 @@ namespace BookShopApi
             }
 
             app.UseCors(builder => builder.AllowAnyOrigin()
-                                        .WithExposedHeaders("Access-Control-Allow-Origin: *")
+                                                .AllowAnyHeader()
+                                                .AllowAnyMethod()
             );
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

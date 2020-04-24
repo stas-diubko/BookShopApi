@@ -16,9 +16,9 @@ namespace BookShopApi.Models
 
         public string email { get; set; }
 
-        public string pass { get; set; }
+        public string password { get; set; }
 
-        public string imgChange { get; set; }
+        public string image { get; set; }
 
         public DateTime createdAt { get; set; } = DateTime.Now;
 
