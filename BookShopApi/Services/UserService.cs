@@ -27,6 +27,17 @@ namespace BookShopApi.Services
         public User Get(string id) =>
             _users.Find<User>(user => user._id == id).FirstOrDefault();
 
+        public ResponseQueryUsers GetUsersWithQuery(int page, int pageSize)
+        {
+            var count = _users.Find(user => true).CountDocuments();
+            var queryUsers = _users.Find(book => true)
+                .Skip(page * pageSize).Limit(pageSize).ToList();
+            var response = new ResponseQueryUsers();
+            response.data = queryUsers;
+            response.usersLength = count;
+            return response;
+        }
+
         public User GetByEmail(string email) =>
            _users.Find<User>(user => user.email == email).FirstOrDefault();
 

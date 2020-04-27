@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using BookShopApi.Models;
 using MongoDB.Driver;
@@ -22,6 +23,17 @@ namespace BookShopApi.Services
 
         public Book Get(string id) =>
             _books.Find<Book>(book => book._id == id).FirstOrDefault();
+
+        public ResponseQueryBooks GetBooksWithQuery(int page, int pageSize)
+        {
+            var count = _books.Find(book => true).CountDocuments();
+            var queryBooks = _books.Find(book => true)
+                .Skip(page * pageSize).Limit(pageSize).ToList();
+            var response = new ResponseQueryBooks();
+            response.data = queryBooks;
+            response.booksLength = count;
+            return response;
+        }
 
         public Book Create(Book book)
 

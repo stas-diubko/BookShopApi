@@ -33,6 +33,10 @@ namespace BookShopApi.Controllers
             return book;
         }
 
+        [HttpGet("{page}/{pageSize}")]
+        public ActionResult<ResponseQueryBooks> GetBooksByQuery(int page, int pageSize) =>
+         _bookService.GetBooksWithQuery(page, pageSize);
+
         [HttpPost]
         public ActionResult<Book> Create(Book book)
         {

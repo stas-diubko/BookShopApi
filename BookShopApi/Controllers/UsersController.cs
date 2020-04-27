@@ -36,6 +36,10 @@ namespace BookShopApi.Controllers
             return user;
         }
 
+        [HttpGet("{page}/{pageSize}")]
+        public ActionResult<ResponseQueryUsers> GetBooksByQuery(int page, int pageSize) =>
+         _userService.GetUsersWithQuery(page, pageSize);
+
         [Authorize]
         [HttpDelete("{id:length(24)}")]
         public IActionResult Delete(string id)
