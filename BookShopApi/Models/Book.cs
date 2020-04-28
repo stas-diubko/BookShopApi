@@ -14,7 +14,7 @@ namespace BookShopApi.Models
 
         public string title { get; set; }
 
-        public string descript { get; set; }
+        public string description { get; set; }
 
         public string price { get; set; }
 

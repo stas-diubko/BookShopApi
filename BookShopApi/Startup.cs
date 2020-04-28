@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using BookShopApi.Helpers;
 
 namespace BookShopApi
 {
@@ -54,6 +55,7 @@ namespace BookShopApi
                 sp.GetRequiredService<IOptions<BookstoreDatabaseSettings>>().Value);
             services.AddSingleton<BookService>();
             services.AddSingleton<UserService>();
+            services.AddSingleton<JWTHelper>();
             services.AddControllers()
                 .AddNewtonsoftJson(options => options.UseMemberCasing());
         }

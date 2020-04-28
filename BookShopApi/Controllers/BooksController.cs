@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using BookShopApi.Models;
 using BookShopApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookShopApi.Controllers
@@ -33,18 +34,20 @@ namespace BookShopApi.Controllers
             return book;
         }
 
+        [Authorize(Roles = "admin")]
         [HttpGet("{page}/{pageSize}")]
         public ActionResult<ResponseQueryBooks> GetBooksByQuery(int page, int pageSize) =>
          _bookService.GetBooksWithQuery(page, pageSize);
 
+        [Authorize(Roles = "admin")]
         [HttpPost]
-        public ActionResult<Book> Create(Book book)
+        public ActionResult<ResponseAddingBook> Create(Book book)
         {
             _bookService.Create(book);
-
-            return CreatedAtRoute("GetBook", new { id = book._id.ToString() }, book);
+            return new ResponseAddingBook() { success = true, message = "Book added" };
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPut("{id:length(24)}")]
         public IActionResult Update(string id, Book bookIn)
         {
@@ -60,8 +63,9 @@ namespace BookShopApi.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id:length(24)}")]
-        public IActionResult Delete(string id)
+        public ActionResult<ResponseAddingBook> Delete(string id)
         {
             var book = _bookService.Get(id);
 
@@ -72,7 +76,7 @@ namespace BookShopApi.Controllers
 
             _bookService.Remove(book._id);
 
-            return NoContent();
+            return new ResponseAddingBook() { success = true, message = "Book deleted" };
         }
     }
 }

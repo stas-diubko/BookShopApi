@@ -40,9 +40,9 @@ namespace BookShopApi.Controllers
         public ActionResult<ResponseQueryUsers> GetBooksByQuery(int page, int pageSize) =>
          _userService.GetUsersWithQuery(page, pageSize);
 
-        [Authorize]
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id:length(24)}")]
-        public IActionResult Delete(string id)
+        public ActionResult<ResponseAddingBook> Delete(string id)
         {
             var user = _userService.Get(id);
 
@@ -53,7 +53,7 @@ namespace BookShopApi.Controllers
 
             _userService.Remove(user._id);
 
-            return NoContent();
+            return new ResponseAddingBook() { success = true, message = "User deleted" };
         }
 
         [HttpPost("{register}")]
