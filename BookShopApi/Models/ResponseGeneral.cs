@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace BookShopApi.Models
 {
-    public class ResponseAddingBook
+    public class ResponseGeneral
     {
         public bool success { get; set; }
         public string message { get; set; }

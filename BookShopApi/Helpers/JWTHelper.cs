@@ -22,34 +22,25 @@ namespace BookShopApi.Helpers
 
         public JWTAuthResponse GenerateToken(Auth userData)
         {
-            var identity = GetIdentity(userData.email, userData.password, false);
-            var identityRefresh = GetIdentity(userData.email, userData.password, true);
 
-            if (identity == null)
+            User person = _userService.GetByEmail(userData.email);
+            string role = _userService.GetRole(userData.email);
+
+            if (person == null)
             {
                 return null;
             }
 
-            var now = DateTime.UtcNow;
-            
-            var jwt = new JwtSecurityToken(
-                    issuer: AuthOptions.ISSUER,
-                    audience: AuthOptions.AUDIENCE,
-                    notBefore: now,
-                    claims: identity.Claims,
-                    expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME)),
-                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+            if (!VerifyHashedPassword(person.password, userData.password))
+            {
+                return null;
+            }
 
-            var jwtRefresh = new JwtSecurityToken(
-                   issuer: AuthOptions.ISSUER,
-                   audience: AuthOptions.AUDIENCE,
-                   notBefore: now,
-                   claims: identityRefresh.Claims,
-                   expires: now.Add(TimeSpan.FromMinutes(AuthOptions.LIFETIME_REFRESH)),
-                   signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+            var identity = GetIdentity(person, role, false);
+            var identityRefresh = GetIdentity(person, role, true);
 
-            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-            var encodedJwtRefresh = new JwtSecurityTokenHandler().WriteToken(jwtRefresh);
+            var encodedJwt = GetJWT(identity, false);
+            var encodedJwtRefresh = GetJWT(identityRefresh, true);
 
             return new JWTAuthResponse
             {
@@ -58,24 +49,51 @@ namespace BookShopApi.Helpers
             };
         }
 
-        private ClaimsIdentity GetIdentity(string userEmail, string password, bool isRefresh)
+        public JWTAuthResponse refreshToken(User user)
         {
-            User person = _userService.GetByEmail(userEmail);
-            string role = _userService.GetRole(userEmail);
-            
-            if (person == null)
+            var role = _userService.GetRole(user.email);
+            var identity = GetIdentity(user, role, false);
+            var identityRefresh = GetIdentity(user, role, true);
+            var encodedJwt = GetJWT(identity, false);
+            var encodedJwtRefresh = GetJWT(identityRefresh, true);
+
+            return new JWTAuthResponse
             {
-                return null;
+                token = encodedJwt,
+                refreshToken = encodedJwtRefresh
+            };
+        }
+
+        public string GetJWT(ClaimsIdentity identity, bool isRefresh)
+        {
+            var now = DateTime.UtcNow;
+            if (isRefresh)
+            {
+                var jwt = new JwtSecurityToken(
+                                   issuer: AuthOptions.ISSUER,
+                                   audience: AuthOptions.AUDIENCE,
+                                   notBefore: now,
+                                   claims: identity.Claims,
+                                   expires: now.Add(TimeSpan.FromSeconds(AuthOptions.LIFETIME_REFRESH)),
+                                   signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+                var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+                return encodedJwt;
+            } else
+            {
+                var jwt = new JwtSecurityToken(
+                                    issuer: AuthOptions.ISSUER,
+                                    audience: AuthOptions.AUDIENCE,
+                                    notBefore: now,
+                                    claims: identity.Claims,
+                                    expires: now.Add(TimeSpan.FromSeconds(AuthOptions.LIFETIME)),
+                                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
+                var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+                return encodedJwt;
             }
+        }
 
-            if (!VerifyHashedPassword(person.password, password))
-            {
-                return null;
-            }
-
-            if (person != null)
-            {
-
+        private ClaimsIdentity GetIdentity(User person, string role, bool isRefresh)
+        { 
                 var claims = isRefresh ?
                                 new List<Claim>
                                 {
@@ -89,15 +107,10 @@ namespace BookShopApi.Helpers
                                     new Claim("email", person.email),
                                     new Claim("role", role)
                                 };
-
-
                 ClaimsIdentity claimsIdentity =
                 new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
                     ClaimsIdentity.DefaultRoleClaimType);
                 return claimsIdentity;
-            }
-
-            return null;
         }
 
         public static bool VerifyHashedPassword(string hashedPassword, string password)

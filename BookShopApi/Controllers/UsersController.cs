@@ -3,6 +3,9 @@ using BookShopApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using BookShopApi.Helpers;
+using Microsoft.AspNetCore.Authentication;
+using System.Threading.Tasks;
 
 namespace BookShopApi.Controllers
 {
@@ -11,10 +14,12 @@ namespace BookShopApi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly UserService _userService;
+        private JWTHelper _jwtHelper;
 
-        public UsersController(UserService userService)
+        public UsersController(UserService userService, JWTHelper jwtHelper)
         {
             _userService = userService;
+            _jwtHelper = jwtHelper;
         }
 
         [Authorize]
@@ -42,7 +47,7 @@ namespace BookShopApi.Controllers
 
         [Authorize(Roles = "admin")]
         [HttpDelete("{id:length(24)}")]
-        public ActionResult<ResponseAddingBook> Delete(string id)
+        public ActionResult<ResponseGeneral> Delete(string id)
         {
             var user = _userService.Get(id);
 
@@ -53,20 +58,26 @@ namespace BookShopApi.Controllers
 
             _userService.Remove(user._id);
 
-            return new ResponseAddingBook() { success = true, message = "User deleted" };
+            return new ResponseGeneral() { success = true, message = "User deleted" };
         }
 
         [HttpPost("{register}")]
         public ActionResult<User> Create(User user)
         {
-            _userService.Create(user);
-
-            return CreatedAtRoute("GetUser", new { id = user._id.ToString() }, user);
+            var existingUser = _userService.GetByEmail(user.email);
+            if (existingUser != null)
+            {
+                return BadRequest(new { errorText = "Email is already in use" });
+            } else
+            {
+                _userService.Create(user);
+                return CreatedAtRoute("GetUser", new { id = user._id.ToString() }, user);
+            }
         }
 
         [Authorize]
         [HttpPut("{id:length(24)}")]
-        public IActionResult Update(string id, User updatingUser)
+        public ActionResult<ResponseGeneralWithToken> Update(string id, UserUpdating updatingUser)
         {
             var user = _userService.Get(id);
             if (user == null)
@@ -76,12 +87,25 @@ namespace BookShopApi.Controllers
 
             _userService.Update(id, updatingUser);
 
-            return NoContent();
+            var authData = new Auth();
+            authData.password = user.password;
+            authData.email = user.email;
+
+            var tokenData = _jwtHelper.GenerateToken(authData);
+
+            return new ResponseGeneralWithToken() { success = true, message = "Data updated", data = tokenData };
         }
+
+        //[Authorize]
+        //[HttpGet("{password}/{id:length(24)}")]
+        //public void UpdatePassword(string id, PasswordUpdate updatingData)
+        //{
+
+        //}
 
         [Authorize]
         [HttpGet("{avatar}/{id:length(24)}")]
-        public ActionResult<string> GetUserAvatar(string id)
+        public async Task<ActionResult<string>> GetUserAvatar(string id)
         {
             string avatar = _userService.GetUserAvatar(id);
             return avatar;

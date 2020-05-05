@@ -41,15 +41,15 @@ namespace BookShopApi.Controllers
 
         [Authorize(Roles = "admin")]
         [HttpPost]
-        public ActionResult<ResponseAddingBook> Create(Book book)
+        public ActionResult<ResponseGeneral> Create(Book book)
         {
             _bookService.Create(book);
-            return new ResponseAddingBook() { success = true, message = "Book added" };
+            return new ResponseGeneral() { success = true, message = "Book added" };
         }
 
         [Authorize(Roles = "admin")]
         [HttpPut("{id:length(24)}")]
-        public IActionResult Update(string id, Book bookIn)
+        public ActionResult<ResponseGeneral> Update(string id, Book bookIn)
         {
             var book = _bookService.Get(id);
 
@@ -60,12 +60,12 @@ namespace BookShopApi.Controllers
 
             _bookService.Update(id, bookIn);
 
-            return NoContent();
+            return new ResponseGeneral() { success = true, message = "Book updated" };
         }
 
         [Authorize(Roles = "admin")]
         [HttpDelete("{id:length(24)}")]
-        public ActionResult<ResponseAddingBook> Delete(string id)
+        public ActionResult<ResponseGeneral> Delete(string id)
         {
             var book = _bookService.Get(id);
 
@@ -76,7 +76,7 @@ namespace BookShopApi.Controllers
 
             _bookService.Remove(book._id);
 
-            return new ResponseAddingBook() { success = true, message = "Book deleted" };
+            return new ResponseGeneral() { success = true, message = "Book deleted" };
         }
     }
 }

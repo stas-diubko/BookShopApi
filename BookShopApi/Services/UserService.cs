@@ -4,6 +4,8 @@ using System.Linq;
 using BookShopApi.Models;
 using MongoDB.Driver;
 using System.Security.Cryptography;
+using MongoDB.Bson;
+using BookShopApi.Helpers;
 
 namespace BookShopApi.Services
 {
@@ -11,7 +13,7 @@ namespace BookShopApi.Services
     {
         private readonly IMongoCollection<User> _users;
         private readonly IMongoCollection<Roles> _roles;
-
+        
         public UserService(IBookstoreDatabaseSettings settings)
         {
             var client = new MongoClient(settings.ConnectionString);
@@ -56,9 +58,19 @@ namespace BookShopApi.Services
             return user;
         }
 
-        public void Update(string id, User updatingUser)
+        public void Update(string id, UserUpdating updatingUser)
         {
-            _users.ReplaceOne(user => user._id == id, updatingUser);
+            //var user = Get(id);
+            //var authData = new Auth();
+            //authData.password = user.password;
+            //authData.email = user.email;
+
+            //var tokenData = _jwtHelper.GenerateToken(authData);
+            var filter = Builders<User>.Filter.Eq("_id", id);
+            var update = Builders<User>.Update.Set("name", updatingUser.name).Set("email", updatingUser.email).Set("image", updatingUser.image);
+            _users.UpdateOne(filter, update);
+
+            //return tokenData;
         }
 
         public string GetRole(string email)
